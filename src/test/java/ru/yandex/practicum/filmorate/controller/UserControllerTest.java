@@ -4,6 +4,7 @@ import org.junit.jupiter.api.*;
 import org.springframework.boot.SpringApplication;
 import org.springframework.context.ConfigurableApplicationContext;
 import ru.yandex.practicum.filmorate.FilmorateApplication;
+import ru.yandex.practicum.filmorate.exceptions.UserNotFoundException;
 import ru.yandex.practicum.filmorate.exceptions.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.validation.UserValidation;
@@ -38,7 +39,7 @@ class UserControllerTest {
         user.setBirthday(LocalDate.of(1946, 8, 20));
 
         final ValidationException exception = assertThrows(
-                ValidationException.class, () -> userValidation.addUser(user));
+                ValidationException.class, () -> UserValidation.userValidator(user));
 
         Assertions.assertEquals("Электронная почта не может быть пустой и должна содержать символ @",exception.getMessage());
     }
@@ -53,7 +54,7 @@ class UserControllerTest {
         user.setBirthday(LocalDate.of(1946, 8, 20));
 
         final ValidationException exception = assertThrows(
-                ValidationException.class, () -> userValidation.addUser(user));
+                ValidationException.class, () -> UserValidation.userValidator(user));
 
         Assertions.assertEquals("Электронная почта не может быть пустой и должна содержать символ @",exception.getMessage());
     }
@@ -68,7 +69,7 @@ class UserControllerTest {
         user.setBirthday(LocalDate.of(1946, 8, 20));
 
         final ValidationException exception = assertThrows(
-                ValidationException.class, () -> userValidation.addUser(user));
+                ValidationException.class, () -> UserValidation.userValidator(user));
 
         Assertions.assertEquals("Логин не может быть пустым и содержать пробелы",exception.getMessage());
     }
@@ -83,7 +84,7 @@ class UserControllerTest {
         user.setBirthday(LocalDate.of(1946, 8, 20));
 
         final ValidationException exception = assertThrows(
-                ValidationException.class, () -> userValidation.addUser(user));
+                ValidationException.class, () -> UserValidation.userValidator(user));
 
         Assertions.assertEquals("Логин не может быть пустым и содержать пробелы",exception.getMessage());
     }
@@ -98,7 +99,7 @@ class UserControllerTest {
         user.setBirthday(LocalDate.of(2045, 12, 5));
 
         final ValidationException exception = assertThrows(
-                ValidationException.class, () -> userValidation.addUser(user));
+                ValidationException.class, () -> UserValidation.userValidator(user));
 
         Assertions.assertEquals("Дата рождения не может быть в будущем",exception.getMessage());
     }
@@ -120,8 +121,8 @@ class UserControllerTest {
         user2.setEmail("new@email.ru");
         user2.setBirthday(LocalDate.of(1990, 11, 5));
 
-        final ValidationException exception = assertThrows(
-                ValidationException.class, () -> userValidation.updateUser(user2));
+        final UserNotFoundException exception = assertThrows(
+                UserNotFoundException.class, () -> UserValidation.userValidator(user2));
 
         Assertions.assertEquals("Пользователя с таким id не существует",exception.getMessage());
     }
@@ -144,7 +145,7 @@ class UserControllerTest {
         user2.setBirthday(LocalDate.of(1990, 11, 5));
 
         final ValidationException exception = assertThrows(
-                ValidationException.class, () -> userValidation.updateUser(user2));
+                ValidationException.class, () -> UserValidation.userValidator(user2));
 
         Assertions.assertEquals("Электронная почта не может быть пустой и должна содержать символ @",exception.getMessage());
     }
@@ -167,7 +168,7 @@ class UserControllerTest {
         user2.setBirthday(LocalDate.of(1990, 11, 5));
 
         final ValidationException exception = assertThrows(
-                ValidationException.class, () -> userValidation.updateUser(user2));
+                ValidationException.class, () -> UserValidation.userValidator(user2));
 
         Assertions.assertEquals("Электронная почта не может быть пустой и должна содержать символ @",exception.getMessage());
     }
@@ -190,7 +191,7 @@ class UserControllerTest {
         user2.setBirthday(LocalDate.of(1990, 11, 5));
 
         final ValidationException exception = assertThrows(
-                ValidationException.class, () -> userValidation.updateUser(user2));
+                ValidationException.class, () -> UserValidation.userValidator(user2));
 
         Assertions.assertEquals("Логин не может быть пустым и содержать пробелы",exception.getMessage());
     }
@@ -213,7 +214,7 @@ class UserControllerTest {
         user2.setBirthday(LocalDate.of(1990, 11, 5));
 
         final ValidationException exception = assertThrows(
-                ValidationException.class, () -> userValidation.updateUser(user2));
+                ValidationException.class, () -> UserValidation.userValidator(user2));
 
         Assertions.assertEquals("Логин не может быть пустым и содержать пробелы",exception.getMessage());
     }
@@ -236,7 +237,7 @@ class UserControllerTest {
         user2.setBirthday(LocalDate.of(2390, 11, 5));
 
         final ValidationException exception = assertThrows(
-                ValidationException.class, () -> userValidation.updateUser(user2));
+                ValidationException.class, () -> UserValidation.userValidator(user2));
 
         Assertions.assertEquals("Дата рождения не может быть в будущем", exception.getMessage());
     }
