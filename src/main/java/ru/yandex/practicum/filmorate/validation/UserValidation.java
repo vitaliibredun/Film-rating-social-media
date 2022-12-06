@@ -28,12 +28,13 @@ public class UserValidation extends InMemoryUserStorage {
             log.error("Validation failed. The date of birthday is in the future {}", user.getBirthday());
             throw new ValidationException("Дата рождения не может быть в будущем");
         }
-        if (!users.containsKey(user.getId()))
+        if ((!users.containsKey(user.getId()))) {
             if (!users.isEmpty()) {
                 if (user.getId() != 0) {
                     log.error("Validation failed. The user with the id doesn't exist {}", user.getId());
                     throw new UserNotFoundException("Пользователя с таким id не существует");
                 }
             }
+        }
     }
 }
