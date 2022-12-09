@@ -45,5 +45,4 @@ public class ErrorHandler {
     public ErrorResponse handleFilmNotFoundException(final FilmNotFoundException exception) {
         return new ErrorResponse(exception.getMessage());
     }
-
 }

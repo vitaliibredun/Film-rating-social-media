@@ -8,14 +8,14 @@ import java.util.Set;
 
 @Data
 public class Film {
-    private int id;
+    private Integer id;
     private String name;
     private String description;
     private LocalDate releaseDate;
-    private long duration;
+    private Long duration;
     private Set<Integer> likes = new HashSet<>();
 
-    public void addLike(int id) {
+    public void addLike(Integer id) {
         likes.add(id);
     }
 }

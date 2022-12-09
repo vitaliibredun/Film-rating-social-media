@@ -2,41 +2,39 @@ package ru.yandex.practicum.filmorate.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import ru.yandex.practicum.filmorate.exceptions.UserAlreadyExistException;
-import ru.yandex.practicum.filmorate.exceptions.UserNotFoundException;
+import ru.yandex.practicum.filmorate.service.checking.UserCheck;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
+import ru.yandex.practicum.filmorate.validation.UserValidation;
 
 
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static ru.yandex.practicum.filmorate.validation.UserValidation.userValidator;
-
 @Service
 public class UserService {
     private final UserStorage userStorage;
+    private final UserValidation userValidation;
+    private final UserCheck userCheck;
 
     @Autowired
-    public UserService(UserStorage userStorage) {
+    public UserService(UserStorage userStorage,
+                       UserValidation userValidation,
+                       UserCheck userCheck) {
         this.userStorage = userStorage;
+        this.userValidation = userValidation;
+        this.userCheck = userCheck;
     }
 
     public User addUser(User user) {
-        if (userStorage.findAllUsers().contains(user)) {
-            throw new UserAlreadyExistException("The user is already exist");
-        }
-
-        userValidator(user);
+        userCheck.checkThereIsNoUser(user);
+        userValidation.userValidator(user);
         return userStorage.addUser(user);
     }
 
     public User updateUser(User user) {
-        if (userStorage.findAllUsers().contains(user)) {
-            throw new UserAlreadyExistException("The user is already exist");
-        }
-
-        userValidator(user);
+        userCheck.checkUserExists(user);
+        userValidation.userValidator(user);
         return userStorage.updateUser(user);
     }
 
@@ -44,27 +42,26 @@ public class UserService {
         return userStorage.findAllUsers();
     }
 
-    public User findUserById(int id) {
-        return userStorage.findUserById(id);
+    public User findUserById(Integer userId) {
+        userCheck.checkUserExistsById(userId);
+        return userStorage.findUserById(userId);
     }
 
-    public void addFriend(int id, int friendId) {
-        if (!userStorage.findAllUsersIds().contains(friendId)) {
-            throw new UserNotFoundException("The user not found");
-        }
+    public void addFriend(Integer id, Integer friendId) {
+        userCheck.checkFriendExists(friendId);
         User userById = userStorage.findUserById(id);
         User friendById = userStorage.findUserById(friendId);
         userById.addFriend(friendId);
         friendById.addFriend(id);
     }
 
-    public void deleteFriend(int id,int friendId) {
+    public void deleteFriend(Integer id,Integer friendId) {
         User userById = userStorage.findUserById(id);
         Set<Integer> friends = userById.getFriendsIds();
         friends.remove(friendId);
     }
 
-    public List<User> findUserFriends(int id) {
+    public List<User> findUserFriends(Integer id) {
         List<User> friendsList = new ArrayList<>();
         Set<Integer> friendsIds = userStorage.findUserById(id).getFriendsIds();
         for (Integer friendId : friendsIds) {
@@ -75,7 +72,7 @@ public class UserService {
         return friendsList;
     }
 
-    public List<User> findCommonFriends(int id, int otherId) {
+    public List<User> findCommonFriends(Integer id, Integer otherId) {
         List<User> commonFriendsList = new ArrayList<>();
         Set<Integer> firstFriendsIds = userStorage.findUserById(id).getFriendsIds();
         Set<Integer> secondFriendsIds = userStorage.findUserById(otherId).getFriendsIds();

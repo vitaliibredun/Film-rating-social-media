@@ -1,16 +1,18 @@
 package ru.yandex.practicum.filmorate.validation;
 
 import lombok.extern.slf4j.Slf4j;
-import ru.yandex.practicum.filmorate.exceptions.FilmNotFoundException;
+import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.exceptions.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.storage.film.InMemoryFilmStorage;
 
 import java.time.LocalDate;
 
+
+@Component
 @Slf4j
-public class FilmValidation extends InMemoryFilmStorage {
-    public static void filmValidator(Film film) {
+public class FilmValidation {
+
+    public void filmValidator(Film film) {
         if (film.getName().isEmpty()) {
             log.error("Validation failed. The name is empty {}", film.getName());
             throw new ValidationException("Название не может быть пустым");
@@ -28,14 +30,6 @@ public class FilmValidation extends InMemoryFilmStorage {
         if (film.getDuration() < 0) {
             log.error("Validation failed. The duration of the film is negative {}", film.getDuration());
             throw new ValidationException("Продолжительность фильма должна быть положительной");
-        }
-        if (!films.containsKey(film.getId())) {
-            if (!films.isEmpty()) {
-                if (film.getId() != 0) {
-                    log.error("Validation failed. The film with the id doesn't exist {}", film.getId());
-                    throw new FilmNotFoundException("Фильма с таким id не существует");
-                }
-            }
         }
     }
 }
