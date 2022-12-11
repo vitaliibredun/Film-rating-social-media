@@ -6,6 +6,8 @@ import org.springframework.context.ConfigurableApplicationContext;
 import ru.yandex.practicum.filmorate.FilmorateApplication;
 import ru.yandex.practicum.filmorate.exceptions.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
+import ru.yandex.practicum.filmorate.storage.film.InMemoryFilmStorage;
 import ru.yandex.practicum.filmorate.validation.FilmValidation;
 
 import java.time.LocalDate;
@@ -15,17 +17,18 @@ import static org.junit.jupiter.api.Assertions.*;
 class FilmControllerTest {
     private FilmValidation filmValidation;
     private ConfigurableApplicationContext application;
+    private FilmStorage filmStorage;
 
     @BeforeEach
     void setUp() {
         filmValidation = new FilmValidation();
+        filmStorage = new InMemoryFilmStorage();
         application = SpringApplication.run(FilmorateApplication.class);
     }
 
     @AfterEach
     void cleanUp() {
         application.close();
-        filmValidation.findAllFilms().clear();
     }
 
     @Test
@@ -35,10 +38,10 @@ class FilmControllerTest {
         film.setName("");
         film.setDescription("Earth's mightiest heroes must come together and learn to fight as a team");
         film.setReleaseDate(LocalDate.of(2012, 4, 26));
-        film.setDuration(142);
+        film.setDuration(142L);
 
         final ValidationException exception = assertThrows(
-                ValidationException.class, () -> filmValidation.addFilm(film));
+                ValidationException.class, () -> filmValidation.filmValidator(film));
 
         Assertions.assertEquals("Название не может быть пустым",exception.getMessage());
     }
@@ -57,10 +60,10 @@ class FilmControllerTest {
                 "Natasha Romanoff, a.k.a. Black Widow; and Clint Barton, a.k.a. Hawkeye, " +
                 "to save the world from the powerful Loki and the alien invasion.");
         film.setReleaseDate(LocalDate.of(2012, 4, 26));
-        film.setDuration(142);
+        film.setDuration(142L);
 
         final ValidationException exception = assertThrows(
-                ValidationException.class, () -> filmValidation.addFilm(film));
+                ValidationException.class, () -> filmValidation.filmValidator(film));
 
         Assertions.assertEquals("Максимальная длина описания — 200 символов",exception.getMessage());
     }
@@ -72,10 +75,10 @@ class FilmControllerTest {
         film.setName("Old pictures");
         film.setDescription("It was before commercial films");
         film.setReleaseDate(LocalDate.of(1786, 5, 16));
-        film.setDuration(14);
+        film.setDuration(14L);
 
         final ValidationException exception = assertThrows(
-                ValidationException.class, () -> filmValidation.addFilm(film));
+                ValidationException.class, () -> filmValidation.filmValidator(film));
 
         Assertions.assertEquals("Дата релиза — не раньше 28 декабря 1895 года",exception.getMessage());
     }
@@ -87,47 +90,23 @@ class FilmControllerTest {
         film.setName("Avengers");
         film.setDescription("Earth's mightiest heroes must come together and learn to fight as a team");
         film.setReleaseDate(LocalDate.of(2012, 4, 26));
-        film.setDuration(-142);
+        film.setDuration(-142L);
 
         final ValidationException exception = assertThrows(
-                ValidationException.class, () -> filmValidation.addFilm(film));
+                ValidationException.class, () -> filmValidation.filmValidator(film));
 
         Assertions.assertEquals("Продолжительность фильма должна быть положительной",exception.getMessage());
     }
 
     @Test
-    @DisplayName("Проверка замены фильма с не существующем id")
+    @DisplayName("Проверка замены фильма с пустым названием")
     void updateFilmTest1() {
         Film film1 = new Film();
         film1.setName("Avengers");
         film1.setDescription("Earth's mightiest heroes must come together and learn to fight as a team");
         film1.setReleaseDate(LocalDate.of(2008, 5, 2));
-        film1.setDuration(134);
-        filmValidation.addFilm(film1);
-
-        Film film2 = new Film();
-        film2.setId(237);
-        film2.setName("Iron man");
-        film2.setDescription("After being held captive in an Afghan cave, " +
-                "billionaire engineer Tony Stark creates a unique weaponized suit of armor to fight evil.");
-        film2.setReleaseDate(LocalDate.of(2012, 4, 26));
-        film2.setDuration(126);
-
-        final ValidationException exception = assertThrows(
-                ValidationException.class, () -> filmValidation.updateFilm(film2));
-
-        Assertions.assertEquals("Фильма с таким id не существует",exception.getMessage());
-    }
-
-    @Test
-    @DisplayName("Проверка замены фильма с пустым названием")
-    void updateFilmTest2() {
-        Film film1 = new Film();
-        film1.setName("Avengers");
-        film1.setDescription("Earth's mightiest heroes must come together and learn to fight as a team");
-        film1.setReleaseDate(LocalDate.of(2008, 5, 2));
-        film1.setDuration(134);
-        filmValidation.addFilm(film1);
+        film1.setDuration(134L);
+        filmStorage.addFilm(film1);
 
         Film film2 = new Film();
         film2.setId(1);
@@ -135,23 +114,23 @@ class FilmControllerTest {
         film2.setDescription("After being held captive in an Afghan cave, " +
                 "billionaire engineer Tony Stark creates a unique weaponized suit of armor to fight evil.");
         film2.setReleaseDate(LocalDate.of(2012, 4, 26));
-        film2.setDuration(126);
+        film2.setDuration(126L);
 
         final ValidationException exception = assertThrows(
-                ValidationException.class, () -> filmValidation.updateFilm(film2));
+                ValidationException.class, () -> filmValidation.filmValidator(film2));
 
         Assertions.assertEquals("Название не может быть пустым",exception.getMessage());
     }
 
     @Test
     @DisplayName("Проверка замены фильма с максимальной длиной описания")
-    void updateFilmTest3() {
+    void updateFilmTest2() {
         Film film1 = new Film();
         film1.setName("Avengers");
         film1.setDescription("Earth's mightiest heroes must come together and learn to fight as a team");
         film1.setReleaseDate(LocalDate.of(2008, 5, 2));
-        film1.setDuration(134);
-        filmValidation.addFilm(film1);
+        film1.setDuration(134L);
+        filmStorage.addFilm(film1);
 
         Film film2 = new Film();
         film2.setId(1);
@@ -169,10 +148,10 @@ class FilmControllerTest {
                 "begins work on perfecting the Iron Man suit. But the man who was put in charge " +
                 "of Stark Industries has plans of his own to take over Tony's technology for other matters.");
         film2.setReleaseDate(LocalDate.of(2012, 4, 26));
-        film2.setDuration(126);
+        film2.setDuration(126L);
 
         final ValidationException exception = assertThrows(
-                ValidationException.class, () -> filmValidation.updateFilm(film2));
+                ValidationException.class, () -> filmValidation.filmValidator(film2));
 
         Assertions.assertEquals("Максимальная длина описания — 200 символов",exception.getMessage());
     }
@@ -180,36 +159,36 @@ class FilmControllerTest {
 
     @Test
     @DisplayName("Проверка замены фильма по дате релиза")
-    void updateFilmTest4() {
+    void updateFilmTest3() {
         Film film1 = new Film();
         film1.setName("Avengers");
         film1.setDescription("Earth's mightiest heroes must come together and learn to fight as a team");
         film1.setReleaseDate(LocalDate.of(2008, 5, 2));
-        film1.setDuration(134);
-        filmValidation.addFilm(film1);
+        film1.setDuration(134L);
+        filmStorage.addFilm(film1);
 
         Film film2 = new Film();
         film2.setId(1);
         film2.setName("Old pictures");
         film2.setDescription("It was before commercial films");
         film2.setReleaseDate(LocalDate.of(1786, 5, 16));
-        film2.setDuration(14);
+        film2.setDuration(14L);
 
         final ValidationException exception = assertThrows(
-                ValidationException.class, () -> filmValidation.updateFilm(film2));
+                ValidationException.class, () -> filmValidation.filmValidator(film2));
 
         Assertions.assertEquals("Дата релиза — не раньше 28 декабря 1895 года",exception.getMessage());
     }
 
     @Test
     @DisplayName("Проверка замены фильма по положительному значению продолжительности")
-    void updateFilmTest5() {
+    void updateFilmTest4() {
         Film film1 = new Film();
         film1.setName("Avengers");
         film1.setDescription("Earth's mightiest heroes must come together and learn to fight as a team");
         film1.setReleaseDate(LocalDate.of(2008, 5, 2));
-        film1.setDuration(134);
-        filmValidation.addFilm(film1);
+        film1.setDuration(134L);
+        filmStorage.addFilm(film1);
 
         Film film2 = new Film();
         film2.setId(1);
@@ -217,10 +196,10 @@ class FilmControllerTest {
         film2.setDescription("After being held captive in an Afghan cave, " +
                 "billionaire engineer Tony Stark creates a unique weaponized suit of armor to fight evil.");
         film2.setReleaseDate(LocalDate.of(2012, 4, 26));
-        film2.setDuration(-126);
+        film2.setDuration(-126L);
 
         final ValidationException exception = assertThrows(
-                ValidationException.class, () -> filmValidation.updateFilm(film2));
+                ValidationException.class, () -> filmValidation.filmValidator(film2));
 
         Assertions.assertEquals("Продолжительность фильма должна быть положительной",exception.getMessage());
     }

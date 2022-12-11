@@ -1,35 +1,32 @@
 package ru.yandex.practicum.filmorate.validation;
 
 import lombok.extern.slf4j.Slf4j;
-import ru.yandex.practicum.filmorate.controller.UserController;
+import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.exceptions.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
 
 import java.time.LocalDate;
 
+@Component
 @Slf4j
-public class UserValidation extends UserController{
-    public static void userValidator(User user) {
+public class UserValidation {
+    public void userValidator(User user) {
         if (user.getEmail().isEmpty() || !user.getEmail().contains("@")) {
-            log.error("Валидация не пройдена");
+            log.error("Validation failed. The email can't be empty or without @ symbol {}", user.getEmail());
             throw new ValidationException("Электронная почта не может быть пустой и должна содержать символ @");
         }
         if (user.getLogin().contains(" ") || user.getLogin().isEmpty()) {
-            log.error("Валидация не пройдена");
+            log.error("Validation failed. The login can't be empty or include space {}", user.getLogin());
             throw new ValidationException("Логин не может быть пустым и содержать пробелы");
         }
-        if (user.getName() == null) {
+        if (user.getName().isBlank() || user.getName().isEmpty()) {
             user.setName(user.getLogin());
+            log.info("The name was empty,it has the same data as login");
             System.out.println("Имя пользователя установлено по значению логина");
-            return;
         }
         if (user.getBirthday().isAfter(LocalDate.now())) {
-            log.error("Валидация не пройдена");
+            log.error("Validation failed. The date of birthday is in the future {}", user.getBirthday());
             throw new ValidationException("Дата рождения не может быть в будущем");
-        }
-        if (!users.isEmpty() && !users.containsKey(user.getId())) {
-            log.error("Валидация не пройдена");
-            throw new ValidationException("Пользователя с таким id не существует");
         }
     }
 }
