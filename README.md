@@ -2,6 +2,12 @@
 
 ![ER diagram](https://github.com/vitaliibredun/java-filmorate/blob/main/src/main/resources/ER%20diagram.png?raw=true)
 
+### user
+Содержит информацию о пользователе, внешний ключ friends_id ссылается на список друзей пользователя.
+
+### film
+Содержит информацию о фильмах, по первичному ключу film_id связь один ко многим с таблицей **film_likes** для получения информации о рейтинге фильма по лайкам. Таблица **film_genre** для получения имени жанра фильма.
+
 ### Request Types
 
 #### Get all films
