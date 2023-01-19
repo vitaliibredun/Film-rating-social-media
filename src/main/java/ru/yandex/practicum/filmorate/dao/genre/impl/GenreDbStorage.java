@@ -22,7 +22,7 @@ public class GenreDbStorage implements GenreStorage {
     public Genre findGenre(Integer id) {
         String sql = "select * " +
                      "from genre " +
-                     "where id = ?";
+                     "where id_genre = ?";
         return jdbcTemplate.queryForObject(sql, this::mapToGenre, id);
     }
 
@@ -71,8 +71,8 @@ public class GenreDbStorage implements GenreStorage {
 
     private Genre mapToGenre(ResultSet resultSet, int rowNum) throws SQLException {
         return Genre.builder()
-                .id(resultSet.getInt("id"))
-                .name(resultSet.getString("name"))
+                .id(resultSet.getInt("id_genre"))
+                .name(resultSet.getString("name_genre"))
                 .build();
     }
 }

@@ -4,25 +4,20 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.dao.film.FilmStorage;
-import ru.yandex.practicum.filmorate.dao.genre.GenreStorage;
-import ru.yandex.practicum.filmorate.dao.mpa.MpaStorage;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.Genre;
+import ru.yandex.practicum.filmorate.model.Mpa;
 
 import java.sql.*;
-import java.util.Collection;
-import java.util.List;
-import java.util.Objects;
+import java.sql.Date;
+import java.util.*;
 
 @Component("filmDbStorage")
 public class FilmDbStorage implements FilmStorage {
     private final JdbcTemplate jdbcTemplate;
-    private final MpaStorage mpaStorage;
-    private final GenreStorage genreStorage;
 
-    public FilmDbStorage(JdbcTemplate jdbcTemplate, MpaStorage mpaStorage, GenreStorage genreStorage) {
+    public FilmDbStorage(JdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;
-        this.mpaStorage = mpaStorage;
-        this.genreStorage = genreStorage;
     }
 
     @Override
@@ -65,19 +60,26 @@ public class FilmDbStorage implements FilmStorage {
 
     @Override
     public Collection<Film> findAllFilms() {
-        String sql = "select f.id, f.name, f.description, f.release_date, f.duration, f.mpa_id, g.name " +
+        String sql = "select f.id, f.name, f.description, f.release_date, f.duration, f.mpa_id, " +
+                "array_agg(g.name_genre) as genre_name, array_agg(g.id_genre) as genre_id, mpa.name_mpa " +
                 "from films as f " +
                 "left outer join film_genre as fg on f.id = fg.film_id " +
-                "left outer join genre as g on fg.genre_id = g.id ";
+                "left outer join genre as g on fg.genre_id = g.id_genre " +
+                "left outer join film_mpa as mpa on f.mpa_id = mpa.id " +
+                "group by f.id";
 
         return jdbcTemplate.query(sql, this::mapRowToFilm);
     }
 
     @Override
     public Film findFilmById(Integer id) {
-        String sql = "select id, name, description, release_date, duration, mpa_id " +
-                "from films " +
-                "where id = ?";
+        String sql = "select f.id, f.name, f.description, f.release_date, f.duration, f.mpa_id, " +
+                "array_agg(g.name_genre) as genre_name, array_agg(g.id_genre) as genre_id, mpa.name_mpa " +
+                "from films as f " +
+                "left outer join film_genre as fg on f.id = fg.film_id " +
+                "left outer join genre as g on fg.genre_id = g.id_genre " +
+                "left outer join film_mpa as mpa on f.mpa_id = mpa.id "+
+                "where f.id = ?";
 
         return jdbcTemplate.queryForObject(sql, this::mapRowToFilm, id);
     }
@@ -98,9 +100,13 @@ public class FilmDbStorage implements FilmStorage {
 
     @Override
     public List<Film> findFilmsByRate(Integer count) {
-        String sql = "select f.id, f.name, f.description, f.release_date, f.duration, f.mpa_id " +
+        String sql = "select f.id, f.name, f.description, f.release_date, f.duration, f.mpa_id, " +
+                "array_agg(g.name_genre) as genre_name, array_agg(g.id_genre) as genre_id, mpa.name_mpa " +
                 "from films as f " +
                 "left outer join films_likes as fl on f.id = fl.film_id " +
+                "left outer join film_genre as fg on f.id = fg.film_id " +
+                "left outer join genre as g on fg.genre_id = g.id_genre " +
+                "left outer join film_mpa as mpa on f.mpa_id = mpa.id " +
                 "group by f.id " +
                 "order by count(fl.likes_id) desc " +
                 "limit ?";
@@ -109,16 +115,30 @@ public class FilmDbStorage implements FilmStorage {
     }
 
     private Film mapRowToFilm(ResultSet resultSet, int rowNum) throws SQLException {
-        Film film = Film.builder()
+        LinkedHashSet<Genre> genres = new LinkedHashSet<>();
+        String genreIds = Arrays.toString((Object[]) resultSet.getArray("genre_id").getArray());
+        String genreNames = Arrays.toString((Object[]) resultSet.getArray("genre_name").getArray());
+        if ((!genreIds.equals("[null]")) && (!genreNames.equals("[null]"))) {
+            String[] id = genreIds.split("\\[|,|\\]| " );
+            String[] name = genreNames.split("\\[|,|\\]| ");
+            for (int i = 0; i < id.length; i++) {
+                for (int j = 0; j < name.length; j++) {
+                    if ((id[i].length() == 1) || (name[i].length() > 2)) {
+                        Genre genre = Genre.builder().id(Integer.valueOf(id[i])).name(name[i]).build();
+                        genres.add(genre);
+                    }
+                }
+            }
+        }
+
+        return Film.builder()
                 .id(resultSet.getInt("id"))
                 .name(resultSet.getString("name"))
                 .description(resultSet.getString("description"))
                 .releaseDate(resultSet.getDate("release_date").toLocalDate())
                 .duration(resultSet.getInt("duration"))
-                .mpa(mpaStorage.findMpa(resultSet.getInt("mpa_id")))
-                .genres(genreStorage.findFilmGenres(resultSet.getInt("id")))
+                .mpa(Mpa.builder().id(resultSet.getInt("mpa_id")).name(resultSet.getString("name_mpa")).build())
+                .genres(genres)
                 .build();
-
-        return film;
     }
 }
