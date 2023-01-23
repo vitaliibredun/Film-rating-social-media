@@ -1,4 +1,4 @@
-package ru.yandex.practicum.filmorate.controller;
+package ru.yandex.practicum.filmorate.validation;
 
 import org.junit.jupiter.api.*;
 import org.springframework.boot.SpringApplication;
@@ -6,15 +6,14 @@ import org.springframework.context.ConfigurableApplicationContext;
 import ru.yandex.practicum.filmorate.FilmorateApplication;
 import ru.yandex.practicum.filmorate.exceptions.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
-import ru.yandex.practicum.filmorate.storage.user.InMemoryUserStorage;
-import ru.yandex.practicum.filmorate.storage.user.UserStorage;
-import ru.yandex.practicum.filmorate.validation.UserValidation;
+import ru.yandex.practicum.filmorate.dao.user.impl.InMemoryUserStorage;
+import ru.yandex.practicum.filmorate.dao.user.UserStorage;
 
 import java.time.LocalDate;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class UserControllerTest {
+class UserValidationTest {
     private UserValidation userValidation;
     private ConfigurableApplicationContext application;
     private UserStorage userStorage;
@@ -34,11 +33,12 @@ class UserControllerTest {
     @Test
     @DisplayName("Проверка добавления user с пустым значением email почты")
     void addUserTest1() {
-        User user = new User();
-        user.setLogin("login");
-        user.setName("Nick Name");
-        user.setEmail("");
-        user.setBirthday(LocalDate.of(1946, 8, 20));
+        User user = User.builder()
+                .login("login")
+                .name("Nick Name")
+                .email("")
+                .birthday(LocalDate.of(1946, 8, 20))
+                .build();
 
         final ValidationException exception = assertThrows(
                 ValidationException.class, () -> userValidation.userValidator(user));
@@ -49,11 +49,12 @@ class UserControllerTest {
     @Test
     @DisplayName("Проверка добавления user с отсутсвием символа @ в значении почты")
     void addUserTest2() {
-        User user = new User();
-        user.setLogin("login");
-        user.setName("NickName");
-        user.setEmail("mail.com");
-        user.setBirthday(LocalDate.of(1946, 8, 20));
+        User user = User.builder()
+                .login("login")
+                .name("NickName")
+                .email("mail.com")
+                .birthday(LocalDate.of(1946, 8, 20))
+                .build();
 
         final ValidationException exception = assertThrows(
                 ValidationException.class, () -> userValidation.userValidator(user));
@@ -64,11 +65,12 @@ class UserControllerTest {
     @Test
     @DisplayName("Проверка добавления user с отсутсвием логина")
     void addUserTest3() {
-        User user = new User();
-        user.setLogin("");
-        user.setName("NickName");
-        user.setEmail("mail@email.com");
-        user.setBirthday(LocalDate.of(1946, 8, 20));
+        User user = User.builder()
+                .login("")
+                .name("NickName")
+                .email("mail@email.com")
+                .birthday(LocalDate.of(1946, 8, 20))
+                .build();
 
         final ValidationException exception = assertThrows(
                 ValidationException.class, () -> userValidation.userValidator(user));
@@ -79,11 +81,12 @@ class UserControllerTest {
     @Test
     @DisplayName("Проверка добавления user с пробелами в логине")
     void addUserTest4() {
-        User user = new User();
-        user.setLogin("log in");
-        user.setName("NickName");
-        user.setEmail("mail@email.com");
-        user.setBirthday(LocalDate.of(1946, 8, 20));
+        User user = User.builder()
+                .login("log in")
+                .name("NickName")
+                .email("mail@email.com")
+                .birthday(LocalDate.of(1946, 8, 20))
+                .build();
 
         final ValidationException exception = assertThrows(
                 ValidationException.class, () -> userValidation.userValidator(user));
@@ -94,11 +97,12 @@ class UserControllerTest {
     @Test
     @DisplayName("Проверка добавления user с датой рождения будущего времени")
     void addUserTest5() {
-        User user = new User();
-        user.setLogin("login");
-        user.setName("NickName");
-        user.setEmail("mail@email.com");
-        user.setBirthday(LocalDate.of(2045, 12, 5));
+        User user = User.builder()
+                .login("login")
+                .name("NickName")
+                .email("mail@email.com")
+                .birthday(LocalDate.of(2045, 12, 5))
+                .build();
 
         final ValidationException exception = assertThrows(
                 ValidationException.class, () -> userValidation.userValidator(user));
@@ -109,19 +113,21 @@ class UserControllerTest {
     @Test
     @DisplayName("Проверка замены user с пустым значением email почты")
     void updateUserTest1() {
-        User user1 = new User();
-        user1.setLogin("login");
-        user1.setName("NickName");
-        user1.setEmail("mail@email.com");
-        user1.setBirthday(LocalDate.of(1980, 12, 15));
+        User user1 = User.builder()
+                .login("login")
+                .name("NickName")
+                .email("mail@email.com")
+                .birthday(LocalDate.of(1980, 12, 15))
+                .build();
         userStorage.addUser(user1);
 
-        User user2 = new User();
-        user2.setId(1);
-        user2.setLogin("loginer");
-        user2.setName("BobName");
-        user2.setEmail("");
-        user2.setBirthday(LocalDate.of(1990, 11, 5));
+        User user2 = User.builder()
+                .id(1)
+                .login("loginer")
+                .name("BobName")
+                .email("")
+                .birthday(LocalDate.of(1990, 11, 5))
+                .build();
 
         final ValidationException exception = assertThrows(
                 ValidationException.class, () -> userValidation.userValidator(user2));
@@ -132,19 +138,21 @@ class UserControllerTest {
     @Test
     @DisplayName("Проверка замены user с отсутсвием символа @ в значении почты")
     void updateUserTest2() {
-        User user1 = new User();
-        user1.setLogin("login");
-        user1.setName("NickName");
-        user1.setEmail("mail@email.com");
-        user1.setBirthday(LocalDate.of(1980, 12, 15));
+        User user1 = User.builder()
+                .login("login")
+                .name("NickName")
+                .email("mail@email.com")
+                .birthday(LocalDate.of(1980, 12, 15))
+                .build();
         userStorage.addUser(user1);
 
-        User user2 = new User();
-        user2.setId(1);
-        user2.setLogin("loginer");
-        user2.setName("BobName");
-        user2.setEmail("newMail.ru");
-        user2.setBirthday(LocalDate.of(1990, 11, 5));
+        User user2 = User.builder()
+                .id(1)
+                .login("loginer")
+                .name("BobName")
+                .email("newMail.ru")
+                .birthday(LocalDate.of(1990, 11, 5))
+                .build();
 
         final ValidationException exception = assertThrows(
                 ValidationException.class, () -> userValidation.userValidator(user2));
@@ -155,19 +163,21 @@ class UserControllerTest {
     @Test
     @DisplayName("Проверка замены user с отсутсвием логина")
     void updateUserTest3() {
-        User user1 = new User();
-        user1.setLogin("login");
-        user1.setName("NickName");
-        user1.setEmail("mail@email.com");
-        user1.setBirthday(LocalDate.of(1980, 12, 15));
+        User user1 = User.builder()
+                .login("login")
+                .name("NickName")
+                .email("mail@email.com")
+                .birthday(LocalDate.of(1980, 12, 15))
+                .build();
         userStorage.addUser(user1);
 
-        User user2 = new User();
-        user2.setId(1);
-        user2.setLogin("");
-        user2.setName("BobName");
-        user2.setEmail("mail@email.com");
-        user2.setBirthday(LocalDate.of(1990, 11, 5));
+        User user2 = User.builder()
+                .id(1)
+                .login("")
+                .name("BobName")
+                .email("mail@email.com")
+                .birthday(LocalDate.of(1990, 11, 5))
+                .build();
 
         final ValidationException exception = assertThrows(
                 ValidationException.class, () -> userValidation.userValidator(user2));
@@ -178,19 +188,21 @@ class UserControllerTest {
     @Test
     @DisplayName("Проверка замены user с пробелами в логине")
     void updateUserTest4() {
-        User user1 = new User();
-        user1.setLogin("login");
-        user1.setName("NickName");
-        user1.setEmail("mail@email.com");
-        user1.setBirthday(LocalDate.of(1980, 12, 15));
+        User user1 = User.builder()
+                .login("login")
+                .name("NickName")
+                .email("mail@email.com")
+                .birthday(LocalDate.of(1980, 12, 15))
+                .build();
         userStorage.addUser(user1);
 
-        User user2 = new User();
-        user2.setId(1);
-        user2.setLogin("logi ner");
-        user2.setName("BobName");
-        user2.setEmail("mail@email.com");
-        user2.setBirthday(LocalDate.of(1990, 11, 5));
+        User user2 = User.builder()
+                .id(1)
+                .login("logi ner")
+                .name("BobName")
+                .email("mail@email.com")
+                .birthday(LocalDate.of(1990, 11, 5))
+                .build();
 
         final ValidationException exception = assertThrows(
                 ValidationException.class, () -> userValidation.userValidator(user2));
@@ -201,19 +213,21 @@ class UserControllerTest {
     @Test
     @DisplayName("Проверка замены user с датой рождения будущего времени")
     void updateUserTest5() {
-        User user1 = new User();
-        user1.setLogin("login");
-        user1.setName("NickName");
-        user1.setEmail("mail@email.com");
-        user1.setBirthday(LocalDate.of(1980, 12, 15));
+        User user1 = User.builder()
+                .login("login")
+                .name("NickName")
+                .email("mail@email.com")
+                .birthday(LocalDate.of(1980, 12, 15))
+                .build();
         userStorage.addUser(user1);
 
-        User user2 = new User();
-        user2.setId(1);
-        user2.setLogin("loginer");
-        user2.setName("BobName");
-        user2.setEmail("mail@email.com");
-        user2.setBirthday(LocalDate.of(2390, 11, 5));
+        User user2 = User.builder()
+                .id(1)
+                .login("loginer")
+                .name("BobName")
+                .email("mail@email.com")
+                .birthday(LocalDate.of(2390, 11, 5))
+                .build();
 
         final ValidationException exception = assertThrows(
                 ValidationException.class, () -> userValidation.userValidator(user2));

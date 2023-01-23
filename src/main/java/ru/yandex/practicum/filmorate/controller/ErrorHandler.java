@@ -45,4 +45,16 @@ public class ErrorHandler {
     public ErrorResponse handleFilmNotFoundException(final FilmNotFoundException exception) {
         return new ErrorResponse(exception.getMessage());
     }
+
+    @ExceptionHandler
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ErrorResponse handlerMpaDoesNotExistsException(final MpaDoesNotExistException exception) {
+        return new ErrorResponse(exception.getMessage());
+    }
+
+    @ExceptionHandler
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ErrorResponse handlerGenreDoesNotExistsException(final GenreDoesNotExistException exception) {
+        return new ErrorResponse(exception.getMessage());
+    }
 }

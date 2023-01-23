@@ -1,33 +1,63 @@
 package ru.yandex.practicum.filmorate.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
-import ru.yandex.practicum.filmorate.exceptions.UserNotFoundException;
+import ru.yandex.practicum.filmorate.dao.genre.GenreStorage;
+import ru.yandex.practicum.filmorate.dao.user.UserStorage;
+import ru.yandex.practicum.filmorate.exceptions.FilmNotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
+import ru.yandex.practicum.filmorate.dao.film.FilmStorage;
+import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.validation.FieldValidation;
 import ru.yandex.practicum.filmorate.validation.FilmValidation;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 public class FilmService {
     private final FilmStorage filmStorage;
     private final FilmValidation filmValidation;
+    private final GenreStorage genreStorage;
+    private final UserStorage userStorage;
+    private final FieldValidation fieldValidation;
 
     @Autowired
-    public FilmService(FilmStorage filmStorage, FilmValidation filmValidation) {
+    public FilmService(@Qualifier("filmDbStorage") FilmStorage filmStorage,
+                       FilmValidation filmValidation, GenreStorage genreStorage,
+                       @Qualifier("userDbStorage") UserStorage userStorage, FieldValidation fieldValidation) {
         this.filmStorage = filmStorage;
         this.filmValidation = filmValidation;
+        this.genreStorage = genreStorage;
+        this.userStorage = userStorage;
+        this.fieldValidation = fieldValidation;
     }
 
     public Film addFilm(Film film) {
         filmValidation.filmValidator(film);
-        return filmStorage.addFilm(film);
+        film.setId(filmStorage.addFilm(film));
+        genreStorage.addFilmToGenre(film);
+        return film;
     }
 
     public Film updateFilm(Film film) {
         filmValidation.filmValidator(film);
+        boolean checkFieldGenresIsNull = fieldValidation.checkFieldGenresIsNull(film);
+        if (checkFieldGenresIsNull) {
+            filmStorage.updateFilm(film);
+            return film;
+        }
+        boolean fieldGenresIsEmpty = fieldValidation.checkFieldGenresIsEmpty(film);
+        if (fieldGenresIsEmpty) {
+            genreStorage.deleteGenreFromFilm(film);
+            return film;
+        }
+        boolean fieldGenresIsPresent = fieldValidation.checkFieldGenresIsPresent(film);
+        if (fieldGenresIsPresent) {
+            genreStorage.deleteGenreFromFilm(film);
+            genreStorage.addFilmToGenre(film);
+            return filmStorage.updateFilm(film);
+        }
         return filmStorage.updateFilm(film);
     }
 
@@ -36,29 +66,26 @@ public class FilmService {
     }
 
     public Film findFilmById(Integer filmId) {
+        boolean filmExist = filmStorage.findAllFilms().stream().map(Film::getId).anyMatch(filmId::equals);
+        if (!filmExist) {
+            throw new FilmNotFoundException("The film with the id doesn't exists");
+        }
         return filmStorage.findFilmById(filmId);
     }
 
-    public void likeToFilm(Integer filmId, Integer userId) {
-        Film filmById = filmStorage.findFilmById(filmId);
-        filmById.addLike(userId);
+    public void rateToFilm(Integer filmId, Integer userId) {
+        filmStorage.addRateToFilm(filmId, userId);
     }
 
-    public void deleteLikeToFilm(Integer filmId, Integer userId) {
-        Film filmById = filmStorage.findFilmById(filmId);
-        if (!filmById.getLikes().contains(userId)) {
-            throw new UserNotFoundException("The user not found");
+    public void deleteRateFromFilm(Integer filmId, Integer userId) {
+        boolean userExist = userStorage.findAllUsers().stream().map(User::getId).anyMatch(userId::equals);
+        if (!userExist) {
+            throw new FilmNotFoundException("The user with the id doesn't exists");
         }
-        Set<Integer> likesToFilm = filmById.getLikes();
-        likesToFilm.remove(userId);
+        filmStorage.deleteRateFromFilm(filmId, userId);
     }
 
     public List<Film> findFilmsByLikes(Integer count) {
-        Collection<Film> allFilms = filmStorage.findAllFilms();
-
-        return allFilms.stream()
-                .sorted(Collections.reverseOrder(Comparator.comparing(film->film.getLikes().size())))
-                .limit(count)
-                .collect(Collectors.toList());
+        return filmStorage.findFilmsByRate(count);
     }
 }
