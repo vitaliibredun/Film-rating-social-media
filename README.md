@@ -1,4 +1,4 @@
-# Java-kanban 
+# Social media 
 
 This is a Spring Boot social media application where you can find a friend, common films or films based on rates
   
