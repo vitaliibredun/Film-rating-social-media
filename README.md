@@ -17,7 +17,6 @@ This is a Spring Boot social media application where you can find a friend, comm
 
 ## Database
 - H2
-- PostgreSQL
  
 ## Getting Started
 To get started with this project, you will need to have the following installed on your local machine:
